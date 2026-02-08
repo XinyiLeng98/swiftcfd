@@ -63,38 +63,7 @@ class TrainingData:
 
     def write(self):
         for var in self.training_variables:
-            df = pd.DataFrame()
-
-            df[f'{var}^n-1_i,j'] = self.data[var][f'{var}^n-1_i,j']
-            df[f'{var}^n-1_i-1,j'] = self.data[var][f'{var}^n-1_i-1,j']
-            df[f'{var}^n-1_i+1,j'] = self.data[var][f'{var}^n-1_i+1,j']
-            df[f'{var}^n-1_i,j-1'] = self.data[var][f'{var}^n-1_i,j-1']
-            df[f'{var}^n-1_i,j+1'] = self.data[var][f'{var}^n-1_i,j+1']
-
-            df[f'{var}^n_i,j'] = self.data[var][f'{var}^n_i,j']
-            df[f'{var}^n_i-1,j'] = self.data[var][f'{var}^n_i-1,j']
-            df[f'{var}^n_i+1,j'] = self.data[var][f'{var}^n_i+1,j']
-            df[f'{var}^n_i,j-1'] = self.data[var][f'{var}^n_i,j-1']
-            df[f'{var}^n_i,j+1'] = self.data[var][f'{var}^n_i,j+1']
-
-            df[f'{var}^n+1_i,j'] = self.data[var][f'{var}^n+1_i,j']
-            df[f'{var}^n+1_i-1,j'] = self.data[var][f'{var}^n+1_i-1,j']
-            df[f'{var}^n+1_i+1,j'] = self.data[var][f'{var}^n+1_i+1,j']
-            df[f'{var}^n+1_i,j-1'] = self.data[var][f'{var}^n+1_i,j-1']
-            df[f'{var}^n+1_i,j+1'] = self.data[var][f'{var}^n+1_i,j+1']
-
+            df = pd.DataFrame(self.data[var])
             case = self.params('solver', 'output', 'filename')
             out_folder = join('output', case)
             df.to_csv(join(out_folder, f'trainingData_{var}.csv'), index=False)
-
-        # # get all fields
-        # names = []
-        # for field_name, field_data in self.field_manager.fields.keys():
-        #     names.append(field_name)
-
-                    
-        # df = pd.DataFrame(headers=names)
-
-        # case = self.params('solver', 'output', 'filename')
-        # out_folder = join('output', case)
-        # df.to_csv(join(out_folder, 'trainingData.csv'), index=False)

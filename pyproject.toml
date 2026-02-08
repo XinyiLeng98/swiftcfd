@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "swiftcfd"
-version = "0.27.0"
+version = "0.27.1"
 description = "A package to solve 2D PDEs using implicit time integration"
 authors = [
     { name = "Tom-Robin Teschner", email = "tom@cfd.university" }
