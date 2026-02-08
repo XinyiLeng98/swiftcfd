@@ -3,7 +3,6 @@ from swiftcfd.equations.numericalSchemes.implicit.secondOrderBackwards import Se
 from swiftcfd.equations.numericalSchemes.implicit.firstOrderUpwind import FirstOrderUpwind
 from swiftcfd.equations.numericalSchemes.implicit.secondOrderUpwind import SecondOrderUpwind
 from swiftcfd.equations.numericalSchemes.implicit.secondOrderCentral import SecondOrderCentral
-from swiftcfd.equations.numericalSchemes.implicit.centralDifferencing import CentralDifferencing
 
 class NumericalSchemeFactory:
     def __init__(self, params, mesh, boundary_conditions, corner_points, field_manager):
