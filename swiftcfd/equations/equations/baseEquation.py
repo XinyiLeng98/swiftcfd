@@ -3,11 +3,10 @@ from abc import ABC, abstractmethod
 from petsc4py import PETSc
 
 from swiftcfd.equations.boundaryConditions.boundaryConditions import BoundaryConditions
-from swiftcfd.equations.boundaryConditions.interfaceConditions import InterfaceConditions
 from swiftcfd.equations.boundaryConditions.cornerPoint import CornerPoint
 from swiftcfd.equations.linearAlgebraSolver.linearAlgebraSolver import LinearAlgebraSolver
 from swiftcfd.enums import PrimitiveVariables as pv
-from swiftcfd.enums import BCType
+from swiftcfd.enums import BCType, CornerType
 
 class BaseEquation(ABC):
     def __init__(self, params, mesh, field_manager):
@@ -16,7 +15,6 @@ class BaseEquation(ABC):
         self.field_manager = field_manager
 
         self.bc = BoundaryConditions(self.params, self.mesh, self.get_variable_name())
-        self.ic = InterfaceConditions(self.mesh, self.bc)
         self.cp = CornerPoint(self.mesh, self.bc)
 
         self.has_first_order_time_derivative = False
@@ -56,21 +54,21 @@ class BaseEquation(ABC):
 
         # apply dirichlet boundary conditions exactly once here
         self.apply_dirichlet_boundary_conditions()
-        # self.bc.apply_boundary_conditions(self.solver, self.field_manager.fields[self.get_variable_name()])
 
-        # set corner points
-        self.cp.apply_corner_points(self.solver, self.field_manager.fields[self.get_variable_name()])
+        # # set corner points
+        # self.cp.apply_corner_points(self.solver, self.field_manager.fields[self.get_variable_name()])
 
         # assemble matrix
         self.solver.assemble()
-        # self.solver.view()
-        # exit()
+        # if self.get_variable_name() == 'p':
+        #     self.solver.view()
+        #     exit(0)
 
         # solver linear system of equations after coefficient matrix has been assembled
         self.solver.solve(self.field_manager.fields[self.get_variable_name()])
 
-        # adjust corner points
-        self.cp.average_field_at_corner_point(self.field_manager.fields[self.get_variable_name()])
+        # # adjust corner points
+        # self.cp.average_field_at_corner_point(self.field_manager.fields[self.get_variable_name()])
 
         # apply under-relaxation
         self.under_relaxation()
@@ -84,6 +82,7 @@ class BaseEquation(ABC):
                 (1.0 - alpha) * self.field_manager.fields[self.get_variable_name()].picard_old[block, i, j]
     
     def apply_dirichlet_boundary_conditions(self):
+        # apply dirichlet boundary conditions at edges
         faces = ["east", "west", "north", "south"]
         face_loops = [self.mesh.loop_east, self.mesh.loop_west, self.mesh.loop_north, self.mesh.loop_south]
         for block_id in range(0, self.mesh.num_blocks):
@@ -94,6 +93,16 @@ class BaseEquation(ABC):
                         ap_index = self.mesh.map3Dto1D(block_id, i, j)
                         self.solver.add_to_A(ap_index, ap_index, 1.0)
                         self.solver.add_to_b(ap_index, bc_value)
+        
+        # apply dirichlet boundary conditions at corners
+        for block_id in range(0, self.mesh.num_blocks):
+            corners = self.cp.get_corners(block_id)
+            for corner_location, corner in corners.items():
+                if corner['type'] == BCType.dirichlet:
+                    bc_value = corner['value']
+                    ap_index = self.mesh.map3Dto1D(block_id, corner['i'], corner['j'])
+                    self.solver.add_to_A(ap_index, ap_index, 1.0)
+                    self.solver.add_to_b(ap_index, bc_value)
 
     def first_order_time_derivative(self, runtime):
         """Handle time derivatives of the equation."""

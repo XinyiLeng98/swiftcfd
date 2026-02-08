@@ -11,7 +11,7 @@ class HeatDiffusion(BaseEquation):
         self.has_first_order_time_derivative = True
         self.has_second_order_space_derivative = True
 
-        constructor_arguments = (self.params, self.mesh, self.bc, self.field_manager)
+        constructor_arguments = (self.params, self.mesh, self.bc, self.cp, self.field_manager)
 
         self.dTdt = FirstOrderEuler(*constructor_arguments)
         self.d2Tdx2 = SecondOrderCentral(*constructor_arguments)

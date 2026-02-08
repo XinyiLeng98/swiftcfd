@@ -1,10 +1,10 @@
 from swiftcfd.equations.numericalSchemes.numericalSchemesBase import NumericalSchemesBase
-from swiftcfd.enums import WRT
+from swiftcfd.enums import WRT, BCType
 from swiftcfd.enums import PrimitiveVariables as pv
 
 class SecondOrderUpwind(NumericalSchemesBase):
-    def __init__(self, params, mesh, ic, field_manager):
-        super().__init__(params, mesh, ic, field_manager)
+    def __init__(self, params, mesh, bc, cp, field_manager):
+        super().__init__(params, mesh, bc, cp, field_manager)
 
     def _compute_coefficients(self, direction, time, var_name, multiplier):
         pass
@@ -98,3 +98,27 @@ class SecondOrderUpwind(NumericalSchemesBase):
 
     def get_right_hand_side_contribution(self, direction, ij, ip1j, im1j, ijp1, ijm1, var_name):
         return 0.0
+    
+    def _east_boundary(self, direction, block_id, solver):
+        pass
+
+    def _west_boundary(self, direction, block_id, solver, var_name):
+        pass
+
+    def _north_boundary(self, direction, block_id, solver, var_name):
+        pass
+
+    def _south_boundary(self, direction, block_id, solver, var_name):
+        pass
+
+    def _bottom_left_corner(self, direction, block_id, solver, var_name):
+        pass
+
+    def _bottom_right_corner(self, direction, block_id, solver, var_name):
+        pass
+
+    def _top_left_corner(self, direction, block_id, solver, var_name):
+        pass
+
+    def _top_right_corner(self, direction, block_id, solver, var_name):
+        pass
