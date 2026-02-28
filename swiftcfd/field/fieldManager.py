@@ -9,6 +9,7 @@ class FieldManager():
         field = Field(self.mesh, field_name)
         field.old = Field(self.mesh, field_name + '_old')
         field.oldold = Field(self.mesh, field_name + '_oldold')
+        field.oldoldold = Field(self.mesh, field_name + '_oldoldold')
         field.picard_old = Field(self.mesh, field_name + 'picard_old')
         self.fields[field.name] = field
 
