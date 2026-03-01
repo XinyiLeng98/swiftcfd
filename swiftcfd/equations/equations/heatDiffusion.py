@@ -2,6 +2,7 @@ from swiftcfd.enums import PrimitiveVariables as pv
 from swiftcfd.equations.equations.baseEquation import BaseEquation
 from swiftcfd.enums import WRT
 from swiftcfd.equations.numericalSchemes.implicit.firstOrderEuler import FirstOrderEuler
+from swiftcfd.equations.numericalSchemes.implicit.secondOrderBackwards import SecondOrderBackwards
 from swiftcfd.equations.numericalSchemes.implicit.secondOrderCentral import SecondOrderCentral
 
 class HeatDiffusion(BaseEquation):
@@ -11,9 +12,9 @@ class HeatDiffusion(BaseEquation):
         self.has_first_order_time_derivative = True
         self.has_second_order_space_derivative = True
 
-        constructor_arguments = (self.params, self.mesh, self.bc, self.cp, self.field_manager)
+        constructor_arguments = (self.params, self.mesh, self.bc, self.field_manager)
 
-        self.dTdt = FirstOrderEuler(*constructor_arguments)
+        self.dTdt = SecondOrderBackwards(*constructor_arguments)
         self.d2Tdx2 = SecondOrderCentral(*constructor_arguments)
         self.d2Tdy2 = SecondOrderCentral(*constructor_arguments)
 

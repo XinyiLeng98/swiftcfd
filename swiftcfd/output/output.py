@@ -35,18 +35,38 @@ class Output():
         with open(join(self.out_folder, filename), 'w') as f:
             f.write(f'TITLE = "{case}"\n')
             f.write('VARIABLES = "x", "y"')
-            for key, _ in self.field_manager.fields.items():
+            for key in self.field_manager.fields.keys():
                 f.write(f', "{key}"')
             f.write('\n')
 
-            for block in range(0, self.mesh.num_blocks):
-                f.write(f'\nZONE T="Block{block + 1}", I={self.mesh.num_x[block]}, J={self.mesh.num_y[block]}, F=POINT\n')
-                for j in range(0, self.mesh.num_y[block]):
-                    for i in range(0, self.mesh.num_x[block]):
-                        f.write(f'{self.mesh.x[block][i][j]} {self.mesh.y[block][i][j]}')
-                        for _, value in self.field_manager.fields.items():
-                            f.write(f' {value[block, i, j]}')
-                        f.write('\n')
+            total_number_of_variables = 2 + len(self.field_manager.fields)
+
+            for block in range(self.mesh.num_blocks):
+                num_points_x = self.mesh.num_points_x[block]
+                num_points_y = self.mesh.num_points_y[block]
+                num_cells_x = self.mesh.num_cells_x[block]
+                num_cells_y = self.mesh.num_cells_y[block]
+
+                f.write(
+                    f'\nZONE T="Block{block+1}", '
+                    f'I={num_points_x}, J={num_points_y}, '
+                    f'DATAPACKING=BLOCK, '
+                    f'VARLOCATION=([3-{total_number_of_variables}]=CELLCENTERED)\n'
+                )
+
+                for j in range(num_points_y):
+                    for i in range(num_points_x):
+                        f.write(f"{self.mesh.x[block][i][j]}\n")
+
+                for j in range(num_points_y):
+                    for i in range(num_points_x):
+                        f.write(f"{self.mesh.y[block][i][j]}\n")
+
+                for key, value in self.field_manager.fields.items():
+                    for j in range(num_cells_y):
+                        for i in range(num_cells_x):
+                            f.write(f"{value[block, i, j]}\n")
+
     
     def plot_contours(self):
         n_fields = len(self.field_manager.fields)
@@ -67,9 +87,9 @@ class Output():
 
             # ---- first pass: get min/max for this subplot ----
             for block in range(self.mesh.num_blocks):
-                nx = self.mesh.num_x[block]
-                ny = self.mesh.num_y[block]
-                offset = self.mesh.points_offset[block]
+                nx = self.mesh.num_cells_x[block]
+                ny = self.mesh.num_cells_y[block]
+                offset = self.mesh.cells_offset[block]
 
                 field = field_data._data[offset : offset + nx * ny].reshape(ny, nx)
                 vmin = min(vmin, field.min())
@@ -78,13 +98,14 @@ class Output():
             # ---- second pass: plotting all blocks on the same subplot ----
             cs = None
             for block in range(self.mesh.num_blocks):
-                nx = self.mesh.num_x[block]
-                ny = self.mesh.num_y[block]
-                offset = self.mesh.points_offset[block]
+                nx = self.mesh.num_cells_x[block]
+                ny = self.mesh.num_cells_y[block]
+                offset = self.mesh.cells_offset[block]
 
                 field = field_data._data[offset : offset + nx * ny].reshape(ny, nx)
-                x = self.mesh.x[block].T
-                y = self.mesh.y[block].T
+                dx, dy = self.mesh.get_spacing(block)
+                x = self.mesh.x[block][:-1, :-1].T + dx/2
+                y = self.mesh.y[block][:-1, :-1].T + dy/2
 
                 cs = ax.contourf(
                     x, y, field,

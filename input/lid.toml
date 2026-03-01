@@ -72,11 +72,11 @@
 ### ----- MESH PROPERTIES ----- ###
 ### --------------------------- ###
 [mesh.block1]
-    # start/end location and number of points to use in the x direction
-    x = {start = 0.0, end = 1.0, num = 41}
+    # start/end location and number of cells to use in the x direction
+    x = {start = 0.0, end = 1.0, num = 128}
 
-    # start/end location and number of points to use in the y direction
-    y = {start = 0.0, end = 1.0, num = 41}
+    # start/end location and number of cells to use in the y direction
+    y = {start = 0.0, end = 1.0, num = 128}
 
 ### ------------------------------------------ ###
 ### ----- BOUNDARY CONDITIONS PROPERTIES ----- ###

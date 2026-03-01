@@ -5,13 +5,12 @@ from swiftcfd.equations.numericalSchemes.implicit.secondOrderUpwind import Secon
 from swiftcfd.equations.numericalSchemes.implicit.secondOrderCentral import SecondOrderCentral
 
 class NumericalSchemeFactory:
-    def __init__(self, params, mesh, boundary_conditions, corner_points, field_manager):
+    def __init__(self, params, mesh, boundary_conditions, field_manager):
         self.params = params
         self.mesh = mesh
         self.bc = boundary_conditions
-        self.cp = corner_points
         self.field_manager = field_manager
-        self.constructor_arguments = (self.params, self.mesh, self.bc, self.cp, self.field_manager)
+        self.constructor_arguments = (self.params, self.mesh, self.bc, self.field_manager)
 
     def create_time_integration_scheme(self, equation):
         # time integration scheme

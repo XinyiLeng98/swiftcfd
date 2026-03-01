@@ -11,7 +11,7 @@ class Pressure(BaseEquation):
         self.has_second_order_space_derivative = True
         self.has_source = True
 
-        numerical_schemes = NumericalSchemeFactory(self.params, self.mesh, self.bc, self.cp, self.field_manager)
+        numerical_schemes = NumericalSchemeFactory(self.params, self.mesh, self.bc, self.field_manager)
 
         self.d2pdx2 = numerical_schemes.create_second_order_space_derivative_scheme(self)
         self.d2pdy2 = numerical_schemes.create_second_order_space_derivative_scheme(self)

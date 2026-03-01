@@ -44,23 +44,23 @@ def run():
         # print time info to console
         log.print_time_info(runtime)
 
-        # linearisation step through picard iterations
-        while(runtime.has_not_reached_final_picard_iteration()):
-            # update picard solution
-            eqm.field_manager.update_picard_solution()
+        # # linearisation step through picard iterations
+        # while(runtime.has_not_reached_final_picard_iteration()):
+        #     # update picard solution
+        #     eqm.field_manager.update_picard_solution()
 
-            # solve non-linear equations (e.q. momentum equations)
-            eqm.solve_non_linear_equations(runtime, stats)
+        #     # solve non-linear equations (e.q. momentum equations)
+        #     eqm.solve_non_linear_equations(runtime, stats)
 
-            # compute picard residuals
-            has_converged = residuals.check_picard_convergence(runtime)
+        #     # compute picard residuals
+        #     has_converged = residuals.check_picard_convergence(runtime)
 
-            # print time step statistics
-            log.print_picard_iteration(runtime, eqm.equations, residuals)
+        #     # print time step statistics
+        #     log.print_picard_iteration(runtime, eqm.equations, residuals)
 
-            if has_converged:
-                runtime.current_picard_iteration = 0
-                break
+        #     if has_converged:
+        #         runtime.current_picard_iteration = 0
+        #         break
 
         # solve linear equations (e.g. pressure poisson, temperature)
         eqm.solve_linear_equations(runtime, stats)

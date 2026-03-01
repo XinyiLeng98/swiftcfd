@@ -13,7 +13,7 @@ class yMomentum(BaseEquation):
 
         self.requires_linearisation = True
 
-        numerical_schemes = NumericalSchemeFactory(self.params, self.mesh, self.bc, self.cp, self.field_manager)
+        numerical_schemes = NumericalSchemeFactory(self.params, self.mesh, self.bc, self.field_manager)
 
         self.dvdt = numerical_schemes.create_time_integration_scheme(self)
         self.dvdx = numerical_schemes.create_first_order_space_derivative_scheme(self)

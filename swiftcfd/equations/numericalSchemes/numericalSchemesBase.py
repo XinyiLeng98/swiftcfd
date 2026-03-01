@@ -4,11 +4,10 @@ from enum import Enum, auto
 from swiftcfd.equations.boundaryConditions.boundaryConditions import BoundaryConditions
 
 class NumericalSchemesBase(ABC):
-    def __init__(self, params, mesh, boundary_conditions, corner_points, field_manager):
+    def __init__(self, params, mesh, boundary_conditions, field_manager):
         self.params = params
         self.mesh = mesh
         self.bc = boundary_conditions
-        self.cp = corner_points
         self.field_manager = field_manager
         self.coefficients = []
 
@@ -27,12 +26,6 @@ class NumericalSchemesBase(ABC):
             self._west_boundary(direction, block_id, solver, var_name)
             self._north_boundary(direction, block_id, solver, var_name)
             self._south_boundary(direction, block_id, solver, var_name)
-
-            # apply numerical scheme on corner elements
-            self._bottom_left_corner(direction, block_id, solver, var_name)
-            self._bottom_right_corner(direction, block_id, solver, var_name)
-            self._top_left_corner(direction, block_id, solver, var_name)
-            self._top_right_corner(direction, block_id, solver, var_name)
 
     @abstractmethod
     def _compute_coefficients(self, direction, block_id, time, var_name, multiplier):
@@ -56,20 +49,4 @@ class NumericalSchemesBase(ABC):
 
     @abstractmethod
     def _south_boundary(self, direction, block_id, solver):
-        pass
-
-    @abstractmethod
-    def _bottom_left_corner(self, direction, block_id, solver, var_name):
-        pass
-
-    @abstractmethod
-    def _bottom_right_corner(self, direction, block_id, solver, var_name):
-        pass
-
-    @abstractmethod
-    def _top_left_corner(self, direction, block_id, solver, var_name):
-        pass
-
-    @abstractmethod
-    def _top_right_corner(self, direction, block_id, solver, var_name):
         pass

@@ -48,7 +48,7 @@ class TrainingData:
     
     def commit_training_data(self):
         for var in self.training_variables:
-            for (block, i, j) in self.mesh.internal_loop_all_blocks():
+            for (block, i, j) in self.mesh.loop_all_internal_cells():
                 self.data[var][f'{var}^n-2_i,j'].append(self.field_manager.fields[var].oldoldold[block, i, j])
                 self.data[var][f'{var}^n-2_i-1,j'].append(self.field_manager.fields[var].oldoldold[block, i - 1, j])
                 self.data[var][f'{var}^n-2_i+1,j'].append(self.field_manager.fields[var].oldoldold[block, i + 1, j])
@@ -78,4 +78,4 @@ class TrainingData:
             df = pd.DataFrame(self.data[var])
             case = self.params('solver', 'output', 'filename')
             out_folder = join('output', case)
-            df.to_csv(join(out_folder, f'trainingData_{var}.csv'), index=False)
+            df.to_csv(join(out_folder, f'trainingData_{var}.csv'), index=False, float_format="%.5e")

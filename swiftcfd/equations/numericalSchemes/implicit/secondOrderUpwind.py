@@ -3,8 +3,8 @@ from swiftcfd.enums import WRT, BCType
 from swiftcfd.enums import PrimitiveVariables as pv
 
 class SecondOrderUpwind(NumericalSchemesBase):
-    def __init__(self, params, mesh, bc, cp, field_manager):
-        super().__init__(params, mesh, bc, cp, field_manager)
+    def __init__(self, params, mesh, bc, field_manager):
+        super().__init__(params, mesh, bc, field_manager)
 
     def _compute_coefficients(self, direction, time, var_name, multiplier):
         pass

@@ -3,8 +3,8 @@ from swiftcfd.enums import WRT, BCType, CornerType
 from swiftcfd.enums import PrimitiveVariables as pv
 
 class FirstOrderUpwind(NumericalSchemesBase):
-    def __init__(self, params, mesh, bc, cp, field_manager):
-        super().__init__(params, mesh, bc, cp, field_manager)
+    def __init__(self, params, mesh, bc, field_manager):
+        super().__init__(params, mesh, bc, field_manager)
 
         self.inv_dx = []
         self.inv_dy = []

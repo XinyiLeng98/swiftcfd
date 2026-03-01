@@ -11,7 +11,7 @@ class Field():
         self.picard_old = None
 
         # solution data
-        self._data = np.zeros(self.mesh.total_points, dtype=PETSc.ScalarType())
+        self._data = np.zeros(self.mesh.total_cells, dtype=PETSc.ScalarType())
 
     def update_solution(self):
         np.copyto(self.oldoldold._data, self.oldold._data)

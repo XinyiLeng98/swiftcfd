@@ -6,7 +6,7 @@ from swiftcfd.equations.linearAlgebraSolver.solverFactory import SolverFactory
 class LinearAlgebraSolver():
     def __init__(self, params, mesh, var_name, has_nullspace):
         # total points in mesh
-        self.total_points = mesh.total_points
+        self.total_cells = mesh.total_cells
         self.mesh = mesh
         self.var_name = var_name
         self.is_diagonal = True
@@ -14,7 +14,7 @@ class LinearAlgebraSolver():
 
         # create coefficient matrix A
         self.A = PETSc.Mat().create()
-        self.A.setSizes([self.total_points, self.total_points])
+        self.A.setSizes([self.total_cells, self.total_cells])
         self.A.setType(PETSc.Mat.Type.SEQAIJ)
         self.A.setPreallocationNNZ(9)
         self.A.setUp()
@@ -26,7 +26,7 @@ class LinearAlgebraSolver():
             self.A.setNearNullSpace(ns)
 
         # create right-hand side vector
-        self.b = PETSc.Vec().createSeq(self.total_points)
+        self.b = PETSc.Vec().createSeq(self.total_cells)
 
         # create linear solver
         self.ksp = SolverFactory().create(params, self.var_name)

@@ -68,12 +68,23 @@
     # write output file every X time steps (set to 0 if no animation should be written)
     writingFrequency = 0
 
+[solver.ML]
+    # generate training data
+    generateTrainingData = false
+
 ### --------------------------- ###
 ### ----- MESH PROPERTIES ----- ###
 ### --------------------------- ###
 [mesh.block1]
     # start/end location and number of cells to use in the x direction
-    x = {start = 0.0, end = 10.0, numCells = 51}
+    x = {start = 0.0, end = 5.0, numCells = 26}
+
+    # start/end location and number of cells to use in the y direction
+    y = {start = 0.0, end = 1.0, numCells = 21}
+
+[mesh.block2]
+    # start/end location and number of cells to use in the x direction
+    x = {start = 5.0, end = 10.0, numCells = 26}
 
     # start/end location and number of cells to use in the y direction
     y = {start = 0.0, end = 1.0, numCells = 21}
@@ -84,11 +95,28 @@
 [boundaryCondition.block1]
     # boundary conditions in the east direction. Available boundary conditions are:
     # dirichlet, neumann, interface
-    east =  {u = {type = "neumann", value = 0.0}, v = {type = "neumann", value = 0.0}, p = {type = "dirichlet", value = 0.0}}
+    east =  {u = {type = "interface", value = 2}, v = {type = "interface", value = 2}, p = {type = "interface", value = 2}}
 
     # boundary conditions in the west direction. Available boundary conditions are:
     # dirichlet, neumann, interface
     west =  {u = {type = "dirichlet", value = 1.0}, v = {type = "dirichlet", value = 0.0}, p = {type = "neumann", value = 0.0}}
+
+    # boundary conditions in the north direction. Available boundary conditions are:
+    # dirichlet, neumann, interface
+    north = {u = {type = "dirichlet", value = 0.0}, v = {type = "dirichlet", value = 0.0}, p = {type = "neumann", value = 0.0}}
+
+    # boundary conditions in the south direction. Available boundary conditions are:
+    # dirichlet, neumann, interface
+    south = {u = {type = "dirichlet", value = 0.0}, v = {type = "dirichlet", value = 0.0}, p = {type = "neumann", value = 0.0}}
+
+[boundaryCondition.block2]
+    # boundary conditions in the east direction. Available boundary conditions are:
+    # dirichlet, neumann, interface
+    east =  {u = {type = "neumann", value = 0.0}, v = {type = "neumann", value = 0.0}, p = {type = "dirichlet", value = 0.0}}
+
+    # boundary conditions in the west direction. Available boundary conditions are:
+    # dirichlet, neumann, interface
+    west =  {u = {type = "interface", value = 1}, v = {type = "interface", value = 1}, p = {type = "interface", value = 1}}
 
     # boundary conditions in the north direction. Available boundary conditions are:
     # dirichlet, neumann, interface
