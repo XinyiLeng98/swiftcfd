@@ -15,17 +15,17 @@ class ModelBase(torch.nn.Module, ABC):
     @abstractmethod
     def forward(self, x):
         pass
-    
+
     @abstractmethod
     def __str__(self):
         pass
 
     def unsteady_heat_diffusion_residual(self, X_batch_raw, Y_prediction_raw, training_parameters):
         # trainign parameters
-        dx = training_parameters[0]
-        dy = training_parameters[1]
-        dt = training_parameters[2]
-        alpha = training_parameters[5]
+        dx = training_parameters[:, 0:1]
+        dy = training_parameters[:, 1:2]
+        dt = training_parameters[:, 2:3]
+        alpha = training_parameters[:, 5:6]
 
         # inputs
         phi_center = X_batch_raw[:, 0:1]
@@ -80,14 +80,19 @@ class ModelBase(torch.nn.Module, ABC):
         assert self.output_variables == 'T'
 
         # TODO: same here, hardcoding T as the variable to use, need to be generalised later
-        X_train = training_data['T']['x_train']
-        Y_train = training_data['T']['y_train']
-        X_val   = training_data['T']['x_validation']
-        Y_val   = training_data['T']['y_validation']
-        training_parameters = training_data['T']['training_parameters']
-        validation_parameters = training_data['T']['validation_parameters']
-            
-        input_size = X_train.shape[1]      
+
+        var = self.input_variables
+        if var not in training_data:
+            raise ValueError(f"Variable '{var}' not found in training_data. Available: {list(training_data.keys())}")
+
+        X_train               = training_data[var]['x_train']
+        Y_train               = training_data[var]['y_train']
+        X_val                 = training_data[var]['x_validation']
+        Y_val                 = training_data[var]['y_validation']
+        training_parameters   = training_data[var]['training_parameters']
+        validation_parameters = training_data[var]['validation_parameters']
+
+        input_size = X_train.shape[1]
 
         # --- Normalization statistics ---
         X_mean = torch.tensor(X_train.mean(axis=0), dtype=torch.float32)
@@ -114,6 +119,11 @@ class ModelBase(torch.nn.Module, ABC):
         total_params = sum(p.numel() for p in self.parameters())
         print(f"  Architecture: {self}")
         print(f"  Model: {input_size} -> {hidden_size}x{num_layers} -> 5  ({total_params:,} params)")
+        print(f"  Parameters   : {total_params:,}")
+        print(f"  Input/Output : {input_size} → {Y_train.shape[1]}")
+        print(f"  Train/Val    : {len(X_train)} / {len(X_val)}")
+        print(f"  Epochs/Patience: {epochs} / {patience}")
+        print(f"  Batch/LR     : {batch_size} / {lr}")
 
         optimizer = torch.optim.Adam(self.parameters(), lr=lr)
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs)

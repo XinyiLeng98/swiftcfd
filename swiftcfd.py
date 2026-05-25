@@ -16,7 +16,13 @@ def run():
             cla_parser.arguments.output_variables)
 
         # train ML model
-        model.train_network(training_data)
+        model.train_network(
+            training_data,
+            epochs=cla_parser.arguments.epochs,
+            batch_size=cla_parser.arguments.batch_size,
+            lr=cla_parser.arguments.lr,
+            patience=cla_parser.arguments.patience,
+        )
 
         print('Done. Exiting solver now...')
         return

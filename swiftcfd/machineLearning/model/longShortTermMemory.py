@@ -1,3 +1,4 @@
+import torch
 from torch import nn
 from swiftcfd.machineLearning.model.modelBase import ModelBase
 
