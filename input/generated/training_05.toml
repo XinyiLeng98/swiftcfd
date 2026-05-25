@@ -1,0 +1,73 @@
+[solver.equation]
+    solver = 'heatDiffusion'
+
+[solver.fluid]
+    alpha = 0.001
+
+[solver.time]
+    dt        = 10.0
+    timesteps = 500
+
+[solver.schemes]
+    timeIntegrationScheme = 'secondOrderBackwards'
+    diffusionScheme       = 'secondOrderCentral'
+
+[solver.linearSolver]
+    solver          = {T = "GMRES"}
+    preconditioner  = {T = "ILU"}
+    tolerance       = {T = 1e-12}
+    maxIterations   = {T = 1000}
+    underRelaxation = {T = 1.0}
+
+[solver.convergence]
+    picardIterations      = 1
+    picard_tolerance      = {T = 1}
+    convergence_tolerance = {T = 1e-10}
+
+[solver.output]
+    filename         = "training_05"
+    writingFrequency = 0
+
+[solver.ML]
+    generateTrainingData = true
+    trainingVariables    = ['T']
+
+[mesh.block1]
+    x = {start = 0.0, end = 0.5, numCells = 11}
+    y = {start = 0.0, end = 0.5, numCells = 11}
+
+[mesh.block2]
+    x = {start = 0.5, end = 1.0, numCells = 11}
+    y = {start = 0.0, end = 0.5, numCells = 11}
+
+[mesh.block3]
+    x = {start = 0.0, end = 0.5, numCells = 11}
+    y = {start = 0.5, end = 1.0, numCells = 11}
+
+[mesh.block4]
+    x = {start = 0.5, end = 1.0, numCells = 11}
+    y = {start = 0.5, end = 1.0, numCells = 11}
+
+[boundaryCondition.block1]
+    east  = {T = {type = "interface",    value = 2}}
+    west  = {T = {type = "dirichlet",  value = 1.9658}}
+    north = {T = {type = "interface",    value = 3}}
+    south = {T = {type = "dirichlet", value = 1.1368}}
+
+[boundaryCondition.block2]
+    east  = {T = {type = "dirichlet",  value = 1.1891}}
+    west  = {T = {type = "interface",    value = 1}}
+    north = {T = {type = "interface",    value = 4}}
+    south = {T = {type = "dirichlet", value = 1.1368}}
+
+[boundaryCondition.block3]
+    east  = {T = {type = "interface",     value = 4}}
+    west  = {T = {type = "dirichlet",   value = 1.9658}}
+    north = {T = {type = "neumann",  value = -0.8524}}
+    south = {T = {type = "interface",     value = 1}}
+
+[boundaryCondition.block4]
+    east  = {T = {type = "dirichlet",  value = 1.1891}}
+    west  = {T = {type = "interface",    value = 3}}
+    north = {T = {type = "neumann", value = -0.8524}}
+    south = {T = {type = "interface",    value = 2}}

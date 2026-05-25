@@ -19,6 +19,22 @@ class CommandLineArgumentParser:
         self.parser.add_argument('-m', '--model', help = 'ML model to use for training and inference',
                                                   choices = ['mlp', 'rnn', 'lstm', 'transformer'],
                                                   required = False)
+        self.parser.add_argument('--epochs',     help = 'number of training epochs (default: 200)',
+                                                  type = int,
+                                                  required = False,
+                                                  default = 200)
+        self.parser.add_argument('--batch-size', help = 'mini-batch size for training (default: 256)',
+                                                  type = int,
+                                                  required = False,
+                                                  default = 256)
+        self.parser.add_argument('--lr',         help = 'learning rate for Adam optimizer (default: 1e-4)',
+                                                  type = float,
+                                                  required = False,
+                                                  default = 1e-4)
+        self.parser.add_argument('--patience',   help = 'early-stopping patience in epochs (default: 300)',
+                                                  type = int,
+                                                  required = False,
+                                                  default = 300)
         
         # parse arguments from command line arguments
         self.arguments = self.__parse()

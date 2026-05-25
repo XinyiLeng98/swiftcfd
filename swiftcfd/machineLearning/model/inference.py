@@ -1,4 +1,5 @@
 import torch
+from swiftcfd.machineLearning.model.modelFactory import create_model
 
 class PINNInference:
     def __init__(self, model_path, normalization_path):

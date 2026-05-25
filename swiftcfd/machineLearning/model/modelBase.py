@@ -1,5 +1,6 @@
 import os
 import copy
+import argparse
 
 import torch
 from abc import ABC, abstractmethod
@@ -21,11 +22,11 @@ class ModelBase(torch.nn.Module, ABC):
         pass
 
     def unsteady_heat_diffusion_residual(self, X_batch_raw, Y_prediction_raw, training_parameters):
-        # trainign parameters
-        dx = training_parameters[0]
-        dy = training_parameters[1]
-        dt = training_parameters[2]
-        alpha = training_parameters[5]
+        # training_parameters: [N, 6] = [dx, dy, dt, rho, nu, alpha]
+        dx    = training_parameters[:, 0:1]
+        dy    = training_parameters[:, 1:2]
+        dt    = training_parameters[:, 2:3]
+        alpha = training_parameters[:, 5:6]
 
         # inputs
         phi_center = X_batch_raw[:, 0:1]
@@ -114,6 +115,10 @@ class ModelBase(torch.nn.Module, ABC):
         total_params = sum(p.numel() for p in self.parameters())
         print(f"  Architecture: {self}")
         print(f"  Model: {input_size} -> {hidden_size}x{num_layers} -> 5  ({total_params:,} params)")
+        print(f"\n  Model       : {self}  ({total_params:,} params)")
+        print(f"  Input/Output: {input_size} → 5")
+        print(f"  Train/Val   : {len(X_train)} / {len(X_val)} samples")
+        print(f"  Epochs/LR   : {epochs} / {lr}  (patience={patience})")
 
         optimizer = torch.optim.Adam(self.parameters(), lr=lr)
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs)
@@ -138,6 +143,7 @@ class ModelBase(torch.nn.Module, ABC):
         # weight is (out_features, in_features), so .shape[1] is what it expects
 
         for epoch in range(epochs):
+            self.train()   # re-enable dropout after each validation pass
             ep_total = ep_data = ep_phys = 0.0
             for Xb, Yb, Tp in train_loader:
                 Xn = (Xb - X_mean)/(X_std + 1e-8)
@@ -146,7 +152,7 @@ class ModelBase(torch.nn.Module, ABC):
                 pred = self(Xn)
                 loss, ld, lp = self.loss_function(Xb, pred, Yn, Y_std, Y_mean, Tp)
                 
-                optimizer.zero_grad();
+                optimizer.zero_grad()
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(self.parameters(), max_norm=1.0)
                 
@@ -189,7 +195,7 @@ class ModelBase(torch.nn.Module, ABC):
                     f"val = {val_loss:>8.2e}, lr = {cur_lr:>8.2e}")
 
             if patience_counter >= patience:
-                print(f"  Early stopping at epoch {epoch}")
+                print(f"  Early stopping at epoch {epoch}  (best val={best_val_loss:.6f})")
                 break
 
         print("=" * 60)
@@ -209,13 +215,14 @@ class ModelBase(torch.nn.Module, ABC):
         torch.save(self.state_dict(), model_path)
         torch.save({"X_mean": X_mean, "X_std": X_std, "Y_mean": Y_mean, "Y_std": Y_std,
                     "input_size": input_size, "hidden_size": hidden_size,
-                    "num_layers": num_layers, "model_type": self}, norm_path)
+                    "num_layers": num_layers, "model_type": str(self)}, norm_path)
 
         print(f"Model saved to:          {model_path}")
         print(f"Norm params saved to:    {norm_path}")
+        print(f"  Best val    : {best_val_loss:.6f}  ({len(train_history)} epochs)")
 
-        training_info = {
-            "model_type": self, "total_params": total_params,
+        return model_path, norm_path, {
+            "model_type": str(self), "total_params": total_params,
             "epochs_trained": len(train_history), "best_val_loss": best_val_loss,
             "final_train_loss": avg_t, "final_physics_loss": avg_p,
             "final_data_loss": avg_d, "hidden_size": hidden_size,
@@ -223,4 +230,57 @@ class ModelBase(torch.nn.Module, ABC):
             "patience": patience, "dropout": dropout,
             "history": train_history,
         }
-        return model_path, norm_path, training_info
+
+
+def main():
+    # Imports here to avoid circular dependency: modelBase → modelFactory → model files → modelBase
+    from swiftcfd.machineLearning.dataManager import DataManager
+    from swiftcfd.machineLearning.model.modelFactory import create_model
+
+    p = argparse.ArgumentParser(description="Train a PINN model for heatedCavity hybrid solver")
+    p.add_argument("--model",      choices=["mlp", "rnn", "lstm", "transformer"], default="mlp")
+    p.add_argument("--epochs",     type=int,   default=200)
+    p.add_argument("--batch-size", type=int,   default=256)
+    p.add_argument("--lr",         type=float, default=1e-4)
+    p.add_argument("--patience",   type=int,   default=40)
+    p.add_argument("--output-dir", type=str,   default="output")
+    args = p.parse_args()
+
+    print(f"\n{'='*65}")
+    print(f"  Training {args.model.upper()} — heatedCavity ML-hybrid")
+    print(f"{'='*65}")
+
+    training_data = DataManager.get_training_data("T", validation_percentage=0.2)
+    input_size    = training_data["T"]["x_train"].shape[1]
+
+    model = create_model(
+        args.model, "T", "T",
+        input_size=input_size,
+        hidden_size=256,
+        output_size=5,
+        num_layers=5,
+    )
+
+    model_path, norm_path, _ = model.train_network(
+        training_data,
+        epochs=args.epochs,
+        batch_size=args.batch_size,
+        lr=args.lr,
+        patience=args.patience,
+        output_dir=args.output_dir,
+    )
+
+    print(f"\n{'='*65}")
+    print(f"  Training complete")
+    print(f"  Model : {model_path}")
+    print(f"  Norm  : {norm_path}")
+    print(f"\n  Example validation run:")
+    print(f"    python3 -m swiftcfd.machineLearning.hybrid_solver \\")
+    print(f"        --config input/generated/val_01.toml \\")
+    print(f"        --model  {model_path} \\")
+    print(f"        --norm   {norm_path}")
+    print(f"{'='*65}\n")
+
+
+if __name__ == "__main__":
+    main()

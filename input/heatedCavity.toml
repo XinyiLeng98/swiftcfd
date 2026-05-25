@@ -72,21 +72,19 @@
 ### ----- MESH PROPERTIES ----- ###
 ### --------------------------- ###
 [mesh.block1]
-    x = {start = 0.0, end = 0.5, numCells = 21}
-    y = {start = 0.0, end = 0.5, numCells = 21}
+    x = {start = 0.0, end = 0.5, numCells = 11}
+    y = {start = 0.0, end = 0.5, numCells = 11}
 
 [mesh.block2]
-    x = {start = 0.5, end = 1.0, numCells = 21}
-    y = {start = 0.0, end = 0.5, numCells = 21}
-
+    x = {start = 0.5, end = 1.0, numCells = 11}
+    y = {start = 0.0, end = 0.5, numCells = 11}
 [mesh.block3]
-    x = {start = 0.0, end = 0.5, numCells = 21}
-    y = {start = 0.5, end = 1.0, numCells = 21}
+    x = {start = 0.0, end = 0.5, numCells = 11}
+    y = {start = 0.5, end = 1.0, numCells = 11}
 
 [mesh.block4]
-    x = {start = 0.5, end = 1.0, numCells = 21}
-    y = {start = 0.5, end = 1.0, numCells = 21}
-
+    x = {start = 0.5, end = 1.0, numCells = 11}
+    y = {start = 0.5, end = 1.0, numCells = 11}
 ### ------------------------------------------ ###
 ### ----- BOUNDARY CONDITIONS PROPERTIES ----- ###
 ### ------------------------------------------ ###
