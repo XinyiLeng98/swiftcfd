@@ -2,7 +2,7 @@
     solver = 'pressureProjection'
 
 [solver.fluid]
-    nu  = 0.005414
+    nu  = 0.056502
     rho = 1.0
 
 [solver.time]
@@ -27,7 +27,7 @@
     convergence_tolerance = {u = 1e-8, v = 1e-8, p = 1e-8}
 
 [solver.output]
-    filename         = "training_07"
+    filename         = "training_10"
     writingFrequency = 0
 
 [solver.ML]
@@ -41,5 +41,5 @@
 [boundaryCondition.block1]
     east  = {u = {type = "dirichlet", value = 0.0}, v = {type = "dirichlet", value = 0.0}, p = {type = "neumann", value = 0.0}}
     west  = {u = {type = "dirichlet", value = 0.0}, v = {type = "dirichlet", value = 0.0}, p = {type = "neumann", value = 0.0}}
-    north = {u = {type = "dirichlet", value = 0.7983}, v = {type = "dirichlet", value = 0.0}, p = {type = "neumann", value = 0.0}}
+    north = {u = {type = "dirichlet", value = 0.5097}, v = {type = "dirichlet", value = 0.0}, p = {type = "neumann", value = 0.0}}
     south = {u = {type = "dirichlet", value = 0.0}, v = {type = "dirichlet", value = 0.0}, p = {type = "neumann", value = 0.0}}

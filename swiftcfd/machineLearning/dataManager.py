@@ -100,41 +100,47 @@ class DataManager:
     
     @staticmethod
     def get_training_data(training_variables, validation_percentage = 0.2):
-        # get all training data sets in output/<simulation_case>/trainingData_VAR.csv
-        training_files = DataManager.__find_all_trainig_data_sets()
 
-        # get training data sets organised by variable names
-        # e.g., now we can get training data like training_data['u'] for u velocity, etc.  
-        training_files_by_variables = DataManager.__organise_training_data_by_variable(training_files, training_variables)
+        variable_list = [v.strip() for v in training_variables.split(',')]
+
+        training_files = DataManager.__find_all_trainig_data_sets()
+        training_files_by_variables = DataManager.__organise_training_data_by_variable(
+            training_files, training_variables
+        )
         print(f'Found {len(training_files)} training data sets for variables: {training_variables}')
 
-        # load training data for each variable
+        # Load raw data for every variable first
+        raw = {}
+        for var in variable_list:
+            x, y, sim_params = DataManager.__load_training_data(training_files_by_variables[var])
+            raw[var] = (x, y, sim_params)
+
+        # Verify all variables have the same number of samples (required for row alignment)
+        n_samples = len(raw[variable_list[0]][0])
+        for var in variable_list[1:]:
+            if len(raw[var][0]) != n_samples:
+                raise ValueError(
+                    f"Variable '{var}' has {len(raw[var][0])} samples but "
+                    f"'{variable_list[0]}' has {n_samples}. All variables must have "
+                    f"the same number of training samples."
+                )
+
+        # One shared permutation keeps rows aligned across all variables
+        n_val = int(validation_percentage * n_samples)
+        idx   = np.random.permutation(n_samples)
+
         training_data = {}
-        for var in training_variables.split(','):
-            x, y, simulation_parameters = DataManager.__load_training_data(training_files_by_variables[var])
-
-            # split into training and validation sets
-            number_of_validation_samples = int(validation_percentage * len(x))
-            idx = np.random.permutation(len(x))
-            
-            x_validation   = x[idx[:number_of_validation_samples]]
-            y_validation   = y[idx[:number_of_validation_samples]]
-            validation_parameters = simulation_parameters[idx[:number_of_validation_samples]]
-
-            x_train = x[idx[number_of_validation_samples:]]
-            y_train = y[idx[number_of_validation_samples:]]
-            training_parameters = simulation_parameters[idx[number_of_validation_samples:]]
-
-            # split into 
+        for var in variable_list:
+            x, y, sim_params = raw[var]
             training_data[var] = {
-                'x_train': x_train,
-                'y_train': y_train,
-                'training_parameters': training_parameters,
-                'x_validation': x_validation,
-                'y_validation': y_validation,
-                'validation_parameters': validation_parameters
+                'x_train':               x[idx[n_val:]],
+                'y_train':               y[idx[n_val:]],
+                'training_parameters':   sim_params[idx[n_val:]],
+                'x_validation':          x[idx[:n_val]],
+                'y_validation':          y[idx[:n_val]],
+                'validation_parameters': sim_params[idx[:n_val]],
             }
-        
+
         return training_data
 
     @staticmethod

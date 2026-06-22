@@ -1,0 +1,6 @@
+# Minimal dependencies for ML TRAINING ONLY (no PETSc / no CFD solver).
+# This is all the HPC needs — training imports only torch/numpy/pandas.
+# (Install a torch build matching your cluster's CUDA; see README_HPC.md.)
+torch
+numpy
+pandas

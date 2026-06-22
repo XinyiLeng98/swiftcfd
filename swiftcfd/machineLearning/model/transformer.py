@@ -1,11 +1,12 @@
+import torch
 from torch import nn
 from swiftcfd.machineLearning.model.modelBase import ModelBase
 
 class Transformer(ModelBase):
-    def __init__(self, input_variables, output_variables, input_size=10, hidden_size=256, output_size=5,
-                 num_layers=5, dropout=0.1):
-        super().__init__(input_variables, output_variables, input_size, hidden_size, output_size,
-                 num_layers, dropout)
+    def __init__(self, input_variables, output_variables, equation_type='heat',
+                 input_size=10, hidden_size=256, output_size=5, num_layers=5, dropout=0.1):
+        super().__init__(input_variables, output_variables, equation_type,
+                         input_size, hidden_size, output_size, num_layers, dropout)
         
         self.input_size = input_size
         self.output_size = output_size

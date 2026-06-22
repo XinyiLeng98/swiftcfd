@@ -8,7 +8,7 @@ import torch
 try:
     import tomllib
 except ModuleNotFoundError:
-    import tomli as tomllib      # pip install tomli  (Python < 3.11)
+    import tomli as tomllib
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -16,7 +16,7 @@ except ModuleNotFoundError:
 # ══════════════════════════════════════════════════════════════════════════════
 
 def load_config(toml_path: str) -> dict:
-    """Extract the parameters needed for the standalone GS solver."""
+
     with open(toml_path, "rb") as f:
         cfg = tomllib.load(f)
 
@@ -126,13 +126,19 @@ class MLInference:
         self.Y_mean = params["Y_mean"]
         self.Y_std  = params["Y_std"]
 
-        input_size  = params.get("input_size",  len(self.X_mean))
-        hidden_size = params.get("hidden_size", 256)
-        num_layers  = params.get("num_layers",  5)
-        model_type  = params.get("model_type",  "mlp")
+        input_size       = params.get("input_size",       len(self.X_mean))
+        hidden_size      = params.get("hidden_size",      256)
+        num_layers       = params.get("num_layers",       5)
+        model_type       = params.get("model_type",       "mlp")
+        equation_type    = params.get("equation_type",    "heat")
+        input_variables  = params.get("input_variables",  "T")
+        output_variables = params.get("output_variables", "T")
 
         self.model = create_model(
-            model_type, "T", "T",
+            model_type,
+            input_variables=input_variables,
+            output_variables=output_variables,
+            equation_type=equation_type,
             input_size=input_size, hidden_size=hidden_size,
             output_size=5, num_layers=num_layers, dropout=0.0,
         )
@@ -282,10 +288,7 @@ class PDESolver(_BaseSolver):
 # ══════════════════════════════════════════════════════════════════════════════
 
 class HybridSolver(_BaseSolver):
-    """
-    Steps 0-1: pure GS (need two time levels to feed the ML model).
-    Steps 2+:  ML warm-start → GS refinement.
-    """
+ 
 
     def __init__(self, cfg, ml: MLInference, use_ser=False, label="ML-Hybrid"):
         super().__init__(cfg, use_ser, label)

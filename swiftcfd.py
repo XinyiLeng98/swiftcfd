@@ -9,11 +9,42 @@ def run():
     # check if machine learning should be trained only
     if cla_parser.arguments.train:
         print('Training machine learning model...')
-        training_data = swiftcfd.ML_data_manager.get_training_data(cla_parser.arguments.input_variables)
+
+        # seed every RNG that affects training so two identical configs are
+        # reproducible: numpy global RNG drives the train/val split permutation
+        # in the DataManager, torch global RNG drives weight init + DataLoader shuffle.
+        import random
+        import numpy as np
+        import torch
+        seed = cla_parser.arguments.seed
+        random.seed(seed)
+        np.random.seed(seed)
+        torch.manual_seed(seed)
+        print(f'  Seed: {seed}')
+
+        input_vars    = [v.strip() for v in cla_parser.arguments.input_variables.split(',')]
+        output_var    = cla_parser.arguments.output_variables.strip()
+        equation_type = cla_parser.arguments.equation_type
+
+        all_vars = list(dict.fromkeys(input_vars + [output_var]))
+        training_data = swiftcfd.ML_data_manager.get_training_data(','.join(all_vars))
+
+        features_per_var = training_data[input_vars[0]]['x_train'].shape[1]
+        input_size  = features_per_var * len(input_vars)
+        output_size = training_data[output_var]['y_train'].shape[1]
 
         # create ML model
-        model = swiftcfd.create_model(cla_parser.arguments.model, cla_parser.arguments.input_variables,
-            cla_parser.arguments.output_variables)
+        model = swiftcfd.create_model(
+            cla_parser.arguments.model,
+            cla_parser.arguments.input_variables,
+            output_var,
+            equation_type=equation_type,
+            input_size=input_size,
+            output_size=output_size,
+            hidden_size=cla_parser.arguments.hidden_size,
+            num_layers=cla_parser.arguments.num_layers,
+            dropout=cla_parser.arguments.dropout,
+        )
 
         # train ML model
         model.train_network(
@@ -21,7 +52,13 @@ def run():
             epochs=cla_parser.arguments.epochs,
             batch_size=cla_parser.arguments.batch_size,
             lr=cla_parser.arguments.lr,
+            hidden_size=cla_parser.arguments.hidden_size,
+            num_layers=cla_parser.arguments.num_layers,
+            dropout=cla_parser.arguments.dropout,
+            weight_pde=cla_parser.arguments.weight_pde,
+            weight_data=cla_parser.arguments.weight_data,
             patience=cla_parser.arguments.patience,
+            output_dir=cla_parser.arguments.output_dir,
         )
 
         print('Done. Exiting solver now...')

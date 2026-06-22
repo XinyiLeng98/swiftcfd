@@ -31,11 +31,43 @@ class CommandLineArgumentParser:
                                                   type = float,
                                                   required = False,
                                                   default = 1e-4)
-        self.parser.add_argument('--patience',   help = 'early-stopping patience in epochs (default: 300)',
-                                                  type = int,
-                                                  required = False,
-                                                  default = 300)
-        
+        self.parser.add_argument('--patience',      help = 'early-stopping patience in epochs (default: 300)',
+                                                    type = int,
+                                                    required = False,
+                                                    default = 300)
+        self.parser.add_argument('--equation-type', help = 'PDE type for physics loss: heat or ns (default: heat)',
+                                                    choices = ['heat', 'ns'],
+                                                    required = False,
+                                                    default = 'heat')
+        self.parser.add_argument('--seed',          help = 'random seed for reproducible training (default: 0)',
+                                                    type = int,
+                                                    required = False,
+                                                    default = 0)
+        self.parser.add_argument('--hidden-size',   help = 'hidden layer width (default: 256)',
+                                                    type = int,
+                                                    required = False,
+                                                    default = 256)
+        self.parser.add_argument('--num-layers',    help = 'number of hidden layers (default: 5)',
+                                                    type = int,
+                                                    required = False,
+                                                    default = 5)
+        self.parser.add_argument('--dropout',       help = 'dropout probability (default: 0.1)',
+                                                    type = float,
+                                                    required = False,
+                                                    default = 0.1)
+        self.parser.add_argument('--weight-pde',    help = 'weight of the PDE/physics loss term (default: 1.0)',
+                                                    type = float,
+                                                    required = False,
+                                                    default = 1.0)
+        self.parser.add_argument('--weight-data',   help = 'weight of the data loss term (default: 1.0)',
+                                                    type = float,
+                                                    required = False,
+                                                    default = 1.0)
+        self.parser.add_argument('--output-dir',    help = 'directory for saved model/norm artifacts (default: output)',
+                                                    type = str,
+                                                    required = False,
+                                                    default = 'output')
+
         # parse arguments from command line arguments
         self.arguments = self.__parse()
     
