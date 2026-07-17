@@ -1,0 +1,111 @@
+#!/bin/bash
+##
+## Pytorch submission script for PBS on DELTA
+## --------------------------------------
+##
+## Follow the 6 steps below to configure your job
+## 
+## STEP 1:
+##
+## Enter a job name after the -N on the line below:
+##
+#PBS -N G3
+##
+## STEP 2:
+##
+## Select the number of cpus/cores required by modifying the #PBS -l select line below
+##
+## Normally you select cpus in chunks of 64 cpus
+## The Maximum value for ncpus is 64 and mpiprocs MUST be the same value as ncpus.
+##
+## If more than 64 cpus are required then select multiple chunks of 64
+## e.g.	64 CPUs: select=1:ncpus=64:mpiprocs=64
+##	128 CPUs: select=2:ncpus=64:mpiprocs=64
+##	..etc..
+##
+#PBS -l select=1:ncpus=64:mpiprocs=64
+##
+## STEP 3:
+##
+## Select the correct queue by modifying the #PBS -q line below
+##
+## half_hour	-  30 minutes
+## one_hour	-   1 hour
+## three_hour   -   3 hours
+## six_hour     -   6 hours
+## half_day	-  12 hours
+## one_day	-  24 hours
+## two_day	-  48 hours
+## five_day	- 120 hours
+## ten_day	- 240 hours (by special arrangement)
+##
+#PBS -q five_day
+##
+## STEP 4:
+##
+## Replace the hpc@cranfield.ac.uk email address
+## with your Cranfield email address on the #PBS -M line below:
+## Your email address is NOT your username
+##
+#PBS -m abe 
+#PBS -M xinyi.leng.608@cranfield.ac.uk
+##
+## ====================================
+## DO NOT CHANGE THE LINES BETWEEN HERE
+## ====================================
+#PBS -j oe
+#PBS -W sandbox=PRIVATE
+#PBS -k n
+ln -s $PWD $PBS_O_WORKDIR/$PBS_JOBID
+## Change to working directory
+cd $PBS_O_WORKDIR
+## Calculate number of CPUs
+export cpus=`cat $PBS_NODEFILE | wc -l`
+## ========
+## AND HERE
+## ========
+##
+## STEP 5: 
+## 
+## Load the production USE
+module purge
+module use /apps/modules/all
+module load Python/3.11.5-GCCcore-13.2.0
+##  Load the default application environment
+##  For a specific version add the version number, e.g.
+##  module load intel/2016b
+##
+##module load PyTorch/1.9.0-fosscuda-2020b
+##
+## STEP 6: 
+## 
+## Run code 
+##
+## The main parameter to modify is your mpi program name
+## - change YOUR_EXECUTABLE to your own filename
+## 
+##rm -rf ML
+python3 -m venv ML
+source ML/bin/activate
+
+pip install --upgrade pip
+pip install -r hpc/requirements-train.txt
+
+export PYTHONPATH=$PWD:$PYTHONPATH
+
+## ---- G3: whole-field U-Net  (ONLY if you uploaded output/field_data/ — see note below)
+if ls output/field_data/fields_*.npz >/dev/null 2>&1; then
+  echo "==================== TRAIN U-Net (G3) ===================="
+  python3 -m swiftcfd.machineLearning.train_unet \
+    --data-dir output/field_data --target delta \
+    --epochs 100 --output-dir output/run_unet
+else
+  echo "SKIP U-Net: no output/field_data/ uploaded yet."
+fi
+deactivate
+
+## Tidy up the log directory
+## DO NOT CHANGE THE LINE BELOW
+## ============================
+rm $PBS_O_WORKDIR/$PBS_JOBID
+#

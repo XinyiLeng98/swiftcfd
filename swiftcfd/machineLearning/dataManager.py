@@ -78,6 +78,14 @@ class DataManager:
     def write(self):
         # write out trainign data (variables at different locations and time steps)
         if self.generate_training_data:
+            # Skip poisoned data from a diverged run: NaN/Inf rows would silently
+            # corrupt the training pool (and still pass a "csv exists" check).
+            for var in self.training_variables:
+                arr = np.asarray(pd.DataFrame(self.data[var]).values, dtype=float)
+                if arr.size and not np.isfinite(arr).all():
+                    print(f"[warning] trainingData_{var} has NaN/Inf — run likely "
+                          f"diverged; NOT writing training data for this case.")
+                    return
             for var in self.training_variables:
                 df = pd.DataFrame(self.data[var])
                 case = self.params('solver', 'output', 'filename')
@@ -178,13 +186,15 @@ class DataManager:
 
     @staticmethod
     def __load_training_data(training_files):
-        # load all training data sets and append to temporary list
+        # load all training data sets, staying in float32 numpy throughout --
+        # expanding millions of rows into Python lists (~700 B/row vs 80 B)
+        # gets the process OOM-killed on multi-case datasets.
         temp_data_sets = []
         simulation_parameters = []
         for training_file in training_files:
-            temp_data_set = pd.read_csv(training_file)
-            temp_data_sets.extend(temp_data_set.values.tolist())
-            number_of_rows = len(temp_data_set.values)
+            temp_data_set = pd.read_csv(training_file, dtype=np.float32)
+            temp_data_sets.append(temp_data_set.to_numpy())
+            number_of_rows = len(temp_data_set)
 
             # get the file path of the output directory
             output_folder = training_file.split('trainingData_')[0]
@@ -198,21 +208,15 @@ class DataManager:
             nu = temp_data_set['nu'][0]
             alpha = temp_data_set['alpha'][0]
 
-            simulation_parameter = np.stack(
-                (
-                    [dx]*number_of_rows,
-                    [dy]*number_of_rows,
-                    [dt]*number_of_rows,
-                    [rho]*number_of_rows,
-                    [nu]*number_of_rows,
-                    [alpha]*number_of_rows
-                ), axis=1
+            simulation_parameter = np.tile(
+                np.array([dx, dy, dt, rho, nu, alpha], dtype=np.float32),
+                (number_of_rows, 1)
             )
-            simulation_parameters.extend(simulation_parameter.tolist())
+            simulation_parameters.append(simulation_parameter)
 
-        # convert to numpy array for data and simulation parameters
-        data = np.array(temp_data_sets, dtype=np.float32)
-        simulation_parameters = np.array(simulation_parameters, dtype=np.float32)
+        # stack the per-case arrays for data and simulation parameters
+        data = np.concatenate(temp_data_sets, axis=0)
+        simulation_parameters = np.concatenate(simulation_parameters, axis=0)
 
         # 20-column layout from trainingData.py:
         #   cols  0- 4: T^{n-2}  [center, west, east, south, north]

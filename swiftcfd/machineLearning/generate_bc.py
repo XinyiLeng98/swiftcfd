@@ -226,6 +226,22 @@ def random_u_inlet(lo=0.2, hi=1.5):
     return round(random.uniform(lo, hi), 4)
 
 
+def cfl_safe_dt(nu, u_max, dx, dy, cfl=0.3):
+    """Largest dt that keeps BOTH the diffusion and advection CFL below `cfl`.
+
+    The swiftCFD time integration is only conditionally stable: the shipped
+    channel.toml dt=0.1 gives CFL≈4 (diffusion) and diverges to NaN over a long
+    run.  We size dt per case from its own nu / inlet speed / grid so every
+    generated run stays stable:
+        dt_diff = cfl · min(dx,dy)² / nu        (viscous limit)
+        dt_adv  = cfl · min(dx,dy) / u_max      (convective / CFL limit)
+    """
+    min_sp = min(dx, dy)
+    dt_diff = cfl * min_sp ** 2 / max(nu, 1e-12)
+    dt_adv  = cfl * min_sp / max(u_max, 1e-12)
+    return min(dt_diff, dt_adv)
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Base-config readers (extract mesh/solver defaults from existing TOMLs)
 # ─────────────────────────────────────────────────────────────────────────────
@@ -481,16 +497,32 @@ def generate_lid_driven(args):
 
 def generate_channel(args):
     base      = _read_ns_config(args.base_config)
-    dt        = args.dt        if args.dt        is not None else base["dt"]
     timesteps = args.timesteps if args.timesteps is not None else base["timesteps"]
     rho       = base["rho"]
     mesh = {k: base[k] for k in
             ("num_cells_x", "num_cells_y", "x0", "x_end", "y0", "y_end")}
+    # domain-size overrides (default to base config when not given)
+    if args.x_end       is not None: mesh["x_end"]       = args.x_end
+    if args.y_end       is not None: mesh["y_end"]       = args.y_end
+    if args.num_cells_x is not None: mesh["num_cells_x"] = args.num_cells_x
+    if args.num_cells_y is not None: mesh["num_cells_y"] = args.num_cells_y
     channel_height = mesh["y_end"] - mesh["y0"]
+    dx = (mesh["x_end"] - mesh["x0"]) / mesh["num_cells_x"]
+    dy = (mesh["y_end"] - mesh["y0"]) / mesh["num_cells_y"]
+
+    # dt: fixed if the user forced --dt, otherwise CFL-safe PER CASE (default).
+    def pick_dt(nu, u_inlet):
+        if args.dt is not None:
+            return args.dt
+        # channel centreline can reach ~1.5x the inlet plug speed once developed
+        return round(cfl_safe_dt(nu, 1.5 * u_inlet, dx, dy, cfl=args.cfl), 6)
 
     print(f"\n{'='*65}")
     print(f"  channel — {args.n_train} train / {args.n_val} val")
-    print(f"  rho={rho}  dt={dt}  timesteps={timesteps}")
+    print(f"  rho={rho}  timesteps={timesteps}  "
+          f"dt={'FIXED '+str(args.dt) if args.dt is not None else f'CFL-safe (cfl={args.cfl})'}")
+    print(f"  domain: x=[{mesh['x0']}, {mesh['x_end']}] ({mesh['num_cells_x']} cells)  "
+          f"y=[{mesh['y0']}, {mesh['y_end']}] ({mesh['num_cells_y']} cells)  dx={dx:.4f} dy={dy:.4f}")
     print(f"  nu ∈ [{args.nu_lo}, {args.nu_hi}]  u_inlet ∈ [{args.u_inlet_lo}, {args.u_inlet_hi}]")
     print(f"  TOML output: {args.toml_dir}")
     print(f"{'='*65}\n")
@@ -502,6 +534,7 @@ def generate_channel(args):
         case_name = f"training_{idx:02d}"
         nu        = random_nu(args.nu_lo,         args.nu_hi)
         u_inlet   = random_u_inlet(args.u_inlet_lo, args.u_inlet_hi)
+        dt        = pick_dt(nu, u_inlet)
         re        = round(u_inlet * channel_height / nu, 1)
 
         path = write_channel_toml(
@@ -510,7 +543,8 @@ def generate_channel(args):
             dt=dt, timesteps=timesteps, **mesh,
         )
         cases.append((case_name, path))
-        print(f"  [{idx:02d}] {case_name}  nu={nu}  u_inlet={u_inlet}  Re≈{re}")
+        print(f"  [{idx:02d}] {case_name}  nu={nu}  u_inlet={u_inlet}  Re≈{re}  "
+              f"dt={dt}  (t_end={dt*timesteps:.2f})")
 
     if args.dry_run:
         print(f"\nDry run — {len(cases)} training TOMLs written, no simulations run.")
@@ -530,6 +564,7 @@ def generate_channel(args):
         case_name = f"val_{idx:02d}"
         nu        = random_nu(args.nu_lo,         args.nu_hi)
         u_inlet   = random_u_inlet(args.u_inlet_lo, args.u_inlet_hi)
+        dt        = pick_dt(nu, u_inlet)
         re        = round(u_inlet * channel_height / nu, 1)
 
         write_channel_toml(
@@ -538,7 +573,7 @@ def generate_channel(args):
             dt=dt, timesteps=timesteps, **mesh,
             generate_training_data='false',
         )
-        print(f"  [val {idx:02d}] {case_name}  nu={nu}  u_inlet={u_inlet}  Re≈{re}")
+        print(f"  [val {idx:02d}] {case_name}  nu={nu}  u_inlet={u_inlet}  Re≈{re}  dt={dt}")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -591,6 +626,19 @@ def main():
                    help="Lower bound for inlet velocity (channel only; default: 0.2)")
     p.add_argument("--u-inlet-hi",  type=float, default=1.5,
                    help="Upper bound for inlet velocity (channel only; default: 1.5)")
+    p.add_argument("--cfl",         type=float, default=0.3,
+                   help="Target CFL for per-case dt sizing (channel only; used when "
+                        "--dt is NOT given; default: 0.3). Lower = more stable/slower.")
+
+    # ── channel domain size overrides (make the channel larger/finer) ──────
+    p.add_argument("--x-end",       type=float, default=None,
+                   help="Channel length / x-end (channel only; default: from base config)")
+    p.add_argument("--y-end",       type=float, default=None,
+                   help="Channel height / y-end (channel only; default: from base config)")
+    p.add_argument("--num-cells-x", type=int,   default=None,
+                   help="Cells in x (channel only; default: from base config)")
+    p.add_argument("--num-cells-y", type=int,   default=None,
+                   help="Cells in y (channel only; default: from base config)")
 
     args = p.parse_args()
 

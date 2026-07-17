@@ -1,6 +1,11 @@
-# Minimal dependencies for ML TRAINING ONLY (no PETSc / no CFD solver).
-# This is all the HPC needs — training imports only torch/numpy/pandas.
+# Dependencies for ML TRAINING ONLY (no PETSc / no CFD solver).
+# `import swiftcfd` eagerly loads parameters (toml), output (matplotlib) and
+# log (blessed), so those are needed even though training itself only uses
+# torch/numpy/pandas.
 # (Install a torch build matching your cluster's CUDA; see README_HPC.md.)
 torch
 numpy
 pandas
+toml
+matplotlib
+blessed

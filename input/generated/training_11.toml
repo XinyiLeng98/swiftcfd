@@ -1,13 +1,13 @@
 [solver.equation]
-    solver = 'pressureProjection'
+    solver = 'fsvp'
 
 [solver.fluid]
     nu  = 0.055894
     rho = 1.0
 
 [solver.time]
-    dt        = 0.3
-    timesteps = 100
+    dt        = 0.008599
+    timesteps = 500
 
 [solver.schemes]
     timeIntegrationScheme = 'secondOrderBackwards'
@@ -22,7 +22,7 @@
     underRelaxation = {u = 1.0,    v = 1.0,    p = 1.0}
 
 [solver.convergence]
-    picardIterations      = 1
+    picardIterations      = 10
     picard_tolerance      = {u = 1e-3, v = 1e-3, p = 1e-3}
     convergence_tolerance = {u = 1e-8, v = 1e-8, p = 1e-8}
 
@@ -35,11 +35,11 @@
     trainingVariables    = ['u', 'v', 'p']
 
 [mesh.block1]
-    x = {start = 0.0, end = 1.0, numCells = 64}
-    y = {start = 0.0, end = 1.0, numCells = 64}
+    x = {start = 0.0, end = 10.0, numCells = 51}
+    y = {start = 0.0, end = 1.0, numCells = 21}
 
 [boundaryCondition.block1]
-    east  = {u = {type = "dirichlet", value = 0.0}, v = {type = "dirichlet", value = 0.0}, p = {type = "neumann", value = 0.0}}
-    west  = {u = {type = "dirichlet", value = 0.0}, v = {type = "dirichlet", value = 0.0}, p = {type = "neumann", value = 0.0}}
-    north = {u = {type = "dirichlet", value = 1.5472}, v = {type = "dirichlet", value = 0.0}, p = {type = "neumann", value = 0.0}}
-    south = {u = {type = "dirichlet", value = 0.0}, v = {type = "dirichlet", value = 0.0}, p = {type = "neumann", value = 0.0}}
+    east  = {u = {type = "neumann",   value = 0.0}, v = {type = "neumann",   value = 0.0}, p = {type = "dirichlet", value = 0.0}}
+    west  = {u = {type = "dirichlet", value = 1.1076}, v = {type = "dirichlet", value = 0.0}, p = {type = "neumann",   value = 0.0}}
+    north = {u = {type = "dirichlet", value = 0.0}, v = {type = "dirichlet", value = 0.0}, p = {type = "neumann",   value = 0.0}}
+    south = {u = {type = "dirichlet", value = 0.0}, v = {type = "dirichlet", value = 0.0}, p = {type = "neumann",   value = 0.0}}

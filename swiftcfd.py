@@ -158,13 +158,18 @@ def end_of_simulation(residuals, out_file, data_manager):
     # write residuals
     residuals.write()
 
-    # write solution
-    out_file.write_tecplot_file()
-    out_file.plot_contours()
-    out_file.plot_residuals()
-
-    # ML training data
+    # ML training data FIRST — plotting is non-essential and must never be able
+    # to lose the data (e.g. a degenerate/NaN field crashes contourf).
     data_manager.write()
+
+    # write solution — guarded so an output/plotting failure cannot abort a
+    # batch data-generation run.
+    try:
+        out_file.write_tecplot_file()
+        out_file.plot_contours()
+        out_file.plot_residuals()
+    except Exception as e:
+        print(f"[warning] output/plotting skipped ({type(e).__name__}: {e})")
 
 if __name__ == '__main__':
     run()
